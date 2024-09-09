@@ -4,3 +4,19 @@ AI Project making Fashion Product Recommendation System Using Resnet 50 website 
 Reference
 [Fashion Product Recommendation System Using Resnet 50](https://medium.com/@sharma.tanish096/fashion-product-recommendation-system-using-resnet-50-5ea5406c8f2c) <br />
 Dataset : [Fashion Product Images (Small)](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small)
+
+Using pythin venv 
+``` 
+# Windows command prompt
+.venv\Scripts\activate.bat
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS and Linux
+source .venv/bin/activate
+```
+Running Website using Streamlit 
+```
+python -m streamlit run app.py
+```
