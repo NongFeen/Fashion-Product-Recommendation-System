@@ -27,7 +27,7 @@ def extract_features(img_path,model):
     return normalized_result
 
 filenames = []
-
+#dataset must be in ./dataset/images
 for file in os.listdir('dataset/images'):
     filenames.append(os.path.join('dataset/images',file))
 
