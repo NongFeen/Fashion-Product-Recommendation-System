@@ -10,7 +10,7 @@ from tensorflow.keras.applications.resnet50 import ResNet50,preprocess_input
 from sklearn.neighbors import NearestNeighbors
 from numpy.linalg import norm
 
-feature_list = np.array(pickle.load(open('embeddings.pkl','rb')))
+feature_list = np.array(pickle.load(open('extracted_feature.pkl','rb')))
 filenames = pickle.load(open('filenames.pkl','rb'))
 
 model = ResNet50(weights='imagenet',include_top=False,input_shape=(224,224,3))

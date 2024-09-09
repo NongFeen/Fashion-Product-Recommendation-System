@@ -164,6 +164,6 @@ cython_debug/
 #upload inside
 /uploads/*
 !uploads/.gitkeep 
-/embeddings.pkl
+/extracted_feature.pkl
 /features.pkl
 /filenames.pkl
