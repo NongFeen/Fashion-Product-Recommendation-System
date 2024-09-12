@@ -5,6 +5,7 @@ Reference
 [Fashion Product Recommendation System Using Resnet 50](https://medium.com/@sharma.tanish096/fashion-product-recommendation-system-using-resnet-50-5ea5406c8f2c) <br />
 
 Dataset must be in "dataset" file, inside must have "images" file 
+./dataset/images
 [Fashion Product Images (Small)](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small)
 
 Using pythin venv 
