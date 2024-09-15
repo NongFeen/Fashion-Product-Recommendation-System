@@ -23,7 +23,6 @@ Running Website using Streamlit
 ```
 python -m streamlit run exampleSite.py
 ```
-
 Running API using
 ```
 uvicorn exampleSite:app --reload
