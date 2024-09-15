@@ -167,3 +167,7 @@ cython_debug/
 /extracted_feature.pkl
 /features.pkl
 /filenames.pkl
+/archive.zip
+/dataset
+/myntradataset
+/styles.csv
