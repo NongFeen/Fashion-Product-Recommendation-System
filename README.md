@@ -21,5 +21,13 @@ source .venv/bin/activate
 ```
 Running Website using Streamlit 
 ```
-python -m streamlit run app.py
+python -m streamlit run exampleSite.py
+```
+Running API using
+```
+uvicorn exampleSite:app --reload
+```
+Testing POST api with img with POST method will recive id as json 
+```
+curl -X POST "http://localhost:8000/upload/" -H "accept: application/json" -H "Content-Type: multipart/form-data" -F "file=@pathto/image.png"
 ```
