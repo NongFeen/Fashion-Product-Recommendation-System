@@ -73,8 +73,10 @@ async def upload_image(file: UploadFile = File(...)):
     #         "distance": float(distances[0][i])
     #     })
     for i in range(10):
+        confidence_score = 1 / (1 + distances[0][i])  # Calculate confidence score from distance
         recommendations.append({
-            "id": int(indices[0][i]) #cast float to int
+            "id": int(indices[0][i]),  # Cast float to int
+            "confidence_score": float(confidence_score)  # Add confidence score
         })
 
     # Return the recommendations
