@@ -19,10 +19,6 @@ Using pythin venv
 # macOS and Linux
 source .venv/bin/activate
 ```
-Running Website using Streamlit 
-```
-python -m streamlit run exampleSite.py
-```
 Running API using
 ```
 uvicorn exampleSite:app --reload
