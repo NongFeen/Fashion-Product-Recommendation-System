@@ -12,6 +12,7 @@ from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.models import Sequential
 from numpy.linalg import norm
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -49,6 +50,8 @@ def image_to_base64(img_path):
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
 
+app.mount("/image", StaticFiles(directory="dataset/images"), name="image")
+
 # API endpoint to handle image uploads and return recommendations
 @app.post("/upload/")
 async def upload_image(file: UploadFile = File(...)):
@@ -56,7 +59,7 @@ async def upload_image(file: UploadFile = File(...)):
     file_location = f"uploads/{file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(file.file.read())
-
+        
     # Extract features from the uploaded image
     features = feature_extraction(file_location, model)
 
@@ -78,6 +81,5 @@ async def upload_image(file: UploadFile = File(...)):
             "id": int(indices[0][i]),  # Cast float to int
             "confidence_score": float(confidence_score)  # Add confidence score
         })
-
     # Return the recommendations
     return JSONResponse(content={"recommendations": recommendations})
