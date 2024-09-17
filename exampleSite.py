@@ -52,7 +52,8 @@ def image_to_base64(img_path):
 
 def extract_id_from_path(file_path):
     # Remove "dataset/images/" and ".jpg" from the path
-    return file_path.replace("dataset/images/", "").rstrip(".jpg")
+    base_filename = os.path.basename(file_path)
+    return base_filename.rstrip(".jpg")
 
 # Static Images
 app.mount("/image", StaticFiles(directory="dataset/images"), name="image")
