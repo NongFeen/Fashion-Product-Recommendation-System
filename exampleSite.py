@@ -50,6 +50,11 @@ def image_to_base64(img_path):
     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
     return img_str
 
+def extract_id_from_path(file_path):
+    # Remove "dataset/images/" and ".jpg" from the path
+    return file_path.replace("dataset/images/", "").rstrip(".jpg")
+
+# Static Images
 app.mount("/image", StaticFiles(directory="dataset/images"), name="image")
 
 # API endpoint to handle image uploads and return recommendations
@@ -76,9 +81,10 @@ async def upload_image(file: UploadFile = File(...)):
     #         "distance": float(distances[0][i])
     #     })
     for i in range(10):
+        img_id = extract_id_from_path(filenames[indices[0][i]])
         confidence_score = 1 / (1 + distances[0][i])  # Calculate confidence score from distance
         recommendations.append({
-            "id": int(indices[0][i]),  # Cast float to int
+            "id": img_id,  # Use the image ID instead of the index
             "confidence_score": float(confidence_score)  # Add confidence score
         })
     # Return the recommendations
