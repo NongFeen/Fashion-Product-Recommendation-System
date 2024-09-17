@@ -83,10 +83,8 @@ async def upload_image(file: UploadFile = File(...)):
     #     })
     for i in range(10):
         img_id = extract_id_from_path(filenames[indices[0][i]])
-        confidence_score = 1 / (1 + distances[0][i])  # Calculate confidence score from distance
         recommendations.append({
             "id": img_id,  # Use the image ID instead of the index
-            "confidence_score": float(confidence_score)  # Add confidence score
         })
     # Return the recommendations
     return JSONResponse(content={"recommendations": recommendations})
