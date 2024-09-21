@@ -131,7 +131,7 @@ async def getFrontpage():
 def getItemDetail(item_id: str):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    item_detail = df[df['id'] == int(item_id)]
+    item_detail = df[df['id'] == int(item_id)]#find by id 
 
     if item_detail.empty:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -141,17 +141,16 @@ def getItemDetail(item_id: str):
 
     return JSONResponse(content=item_dict)
 
-@app.get("/searchbyname")
+@app.get("/searchbyname") 
 def get_item_detail_by_name(name: str):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    
-    item_detail = df[df['productDisplayName'].str.contains(name, case=False, na=False)]
-
+    item_detail = df[df['productDisplayName'].str.contains(name, case=False, na=False)]#find by name
     if item_detail.empty:
         raise HTTPException(status_code=404, detail="No items found")
 
     items_list = item_detail.to_dict(orient='records')
     items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
-
+    #example | searchbyname?name=Turtle Check men 
+    #will turn to | searchbyname?name=Turtle%20Check%20men
     return JSONResponse(content=items_list)
