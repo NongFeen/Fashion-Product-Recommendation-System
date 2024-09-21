@@ -207,4 +207,5 @@ def get_item_detail_by_name(
 
     items_list = item_detail.to_dict(orient='records')
     items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
+    #example /searchbyDetail?gender=Men&masterCategory=Apparel
     return JSONResponse(content=items_list)
