@@ -13,8 +13,12 @@ from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.models import Sequential
 from numpy.linalg import norm
 from fastapi.staticfiles import StaticFiles
+import pandas as pd
 
 app = FastAPI()
+
+# Load csv file
+csv_path = 'dataset/fix_styles.csv'
 
 # Load pre-saved features and filenames
 feature_list = np.array(pickle.load(open('extracted_feature.pkl', 'rb')))
@@ -88,3 +92,20 @@ async def upload_image(file: UploadFile = File(...)):
         })
     # Return the recommendations
     return JSONResponse(content={"recommendations": recommendations})
+
+@app.get("/metadata")
+async def upload_image():
+    try:
+        df = pd.read_csv(csv_path, delimiter=';') 
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        json_data = df.to_dict(orient='records')
+        # some missing value in csv make me pain   - Feen
+        json_data = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in json_data] # don't touch this 
+        # Somehow this is needed to run
+        # for item loop each item 
+        # for kv loop in key and value 
+        # pd.isna(v) check if have value or not then replace it with 'None' as json can process with that
+        return JSONResponse(content=json_data)
+    
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
