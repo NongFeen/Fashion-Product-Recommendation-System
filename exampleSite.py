@@ -170,3 +170,41 @@ def get_multiple_by_id(ids: str):
     items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
     #example /getMultiple?ids=9204,6842,13089
     return JSONResponse(content=items_list)
+
+@app.get("/searchbyDetail") 
+def get_item_detail_by_name(
+    gender: str = None,
+    masterCategory: str = None,
+    subCategory: str = None,
+    articleType: str = None,
+    baseColour: str = None,
+    season: str = None,
+    year: str = None,
+    usage : str = None):
+    df = pd.read_csv(csv_path, delimiter=';')
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    item_detail = df
+    #filter each categories one by one
+    if gender:
+        item_detail = item_detail[item_detail['gender'].str.contains(gender, case=False, na=False)]
+    if masterCategory:
+        item_detail = item_detail[item_detail['masterCategory'].str.contains(masterCategory, case=False, na=False)]
+    if subCategory:
+        item_detail = item_detail[item_detail['subCategory'].str.contains(subCategory, case=False, na=False)]
+    if articleType:
+        item_detail = item_detail[item_detail['articleType'].str.contains(articleType, case=False, na=False)]
+    if baseColour:
+        item_detail = item_detail[item_detail['baseColour'].str.contains(baseColour, case=False, na=False)]
+    if season:
+        item_detail = item_detail[item_detail['season'].str.contains(season, case=False, na=False)]
+    if year:
+        item_detail = item_detail[item_detail['year'].astype(str).str.contains(year, case=False, na=False)]
+    if usage:
+        item_detail = item_detail[item_detail['usage'].str.contains(usage, case=False, na=False)]
+    if item_detail.empty:
+        raise HTTPException(status_code=404, detail="No items found")
+
+    items_list = item_detail.to_dict(orient='records')
+    items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
+    return JSONResponse(content=items_list)
