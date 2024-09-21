@@ -99,12 +99,28 @@ async def upload_image():
         df = pd.read_csv(csv_path, delimiter=';') 
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         json_data = df.to_dict(orient='records')
-        # some missing value in csv make me pain   - Feen
+        
         json_data = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in json_data] # don't touch this 
         # Somehow this is needed to run
         # for item loop each item 
         # for kv loop in key and value 
         # pd.isna(v) check if have value or not then replace it with 'None' as json can process with that
+        return JSONResponse(content=json_data)
+    
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+# some missing value in csv make me pain   - Feen
+@app.get("/frontpage")
+async def upload_image():
+    try:
+        # Read the CSV file
+        df = pd.read_csv(csv_path, delimiter=';')
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        
+        filtered_df = df[['productDisplayName', 'price', 'id']] # Filter only columns that used
+        json_data = filtered_df.to_dict(orient='records')
+        json_data = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in json_data]
+        
         return JSONResponse(content=json_data)
     
     except Exception as e:
