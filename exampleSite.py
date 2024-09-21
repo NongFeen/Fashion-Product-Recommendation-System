@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 import numpy as np
@@ -94,7 +95,7 @@ async def upload_image(file: UploadFile = File(...)):
     return JSONResponse(content={"recommendations": recommendations})
 
 @app.get("/metadata")
-async def upload_image():
+async def getMetadata():
     try:
         df = pd.read_csv(csv_path, delimiter=';') 
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -111,7 +112,7 @@ async def upload_image():
         return JSONResponse(content={"error": str(e)}, status_code=500)
 # some missing value in csv make me pain   - Feen
 @app.get("/frontpage")
-async def upload_image():
+async def getFrontpage():
     try:
         # Read the CSV file
         df = pd.read_csv(csv_path, delimiter=';')
@@ -125,3 +126,17 @@ async def upload_image():
     
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+    
+@app.get("/detail/{item_id}")
+def getItemDetail(item_id: str):
+    df = pd.read_csv(csv_path, delimiter=';')
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    item_detail = df[df['id'] == int(item_id)]#find id
+
+    if item_detail.empty:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    item_dict = item_detail.to_dict(orient='records')[0]
+    item_dict = {k: (None if pd.isna(v) else v) for k, v in item_dict.items()}
+
+    return JSONResponse(content=item_dict)
