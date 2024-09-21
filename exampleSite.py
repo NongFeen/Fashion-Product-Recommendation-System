@@ -159,13 +159,13 @@ def get_item_detail_by_name(name: str):
 def get_multiple_by_id(ids: str):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    
+    filtered_df = df[['productDisplayName', 'price', 'id']]
     id_list = [int(i) for i in ids.split(",")]
-    item_details = df[df['id'].isin(id_list)]
+    item_details = filtered_df[filtered_df['id'].isin(id_list)]
 
     if item_details.empty:
         raise HTTPException(status_code=404, detail="No items found")
-
+    
     items_list = item_details.to_dict(orient='records')
     items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
     #example /getMultiple?ids=9204,6842,13089
