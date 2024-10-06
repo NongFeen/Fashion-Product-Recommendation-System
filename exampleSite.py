@@ -1,5 +1,5 @@
 from http.client import HTTPException
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 import numpy as np
 import pickle
@@ -14,8 +14,9 @@ from tensorflow.keras.layers import GlobalMaxPooling2D
 from tensorflow.keras.models import Sequential
 from numpy.linalg import norm
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-
+from fastapi import Response
 app = FastAPI()
 
 # Load csv file
@@ -30,6 +31,14 @@ model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3
 model.trainable = False
 model = Sequential([model, GlobalMaxPooling2D()])
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 # Function to extract features from an image
 def feature_extraction(img_path, model):
     img = image.load_img(img_path, target_size=(224, 224))
@@ -64,7 +73,7 @@ def extract_id_from_path(file_path):
 app.mount("/image", StaticFiles(directory="dataset/images"), name="image")
 
 # API endpoint to handle image uploads and return recommendations
-@app.post("/upload/")
+@app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     # Save the uploaded image temporarily
     file_location = f"uploads/{file.filename}"
@@ -92,7 +101,7 @@ async def upload_image(file: UploadFile = File(...)):
             "id": img_id,  # Use the image ID instead of the index
         })
     # Return the recommendations
-    return JSONResponse(content={"recommendations": recommendations})
+    return JSONResponse(content= recommendations)
 
 @app.get("/metadata")
 async def getMetadata():
@@ -111,15 +120,21 @@ async def getMetadata():
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 # some missing value in csv make me pain   - Feen
-@app.get("/frontpage")
-async def getFrontpage():
+@app.get("/Frontpage/")
+async def getFrontpage(limit: int = Query(10, enum=[10, 20, 30, 50])):
     try:
         # Read the CSV file
         df = pd.read_csv(csv_path, delimiter=';')
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         
-        filtered_df = df[['productDisplayName', 'price', 'id']] # Filter only columns that used
-        json_data = filtered_df.to_dict(orient='records')
+        # Filter only the necessary columns
+        filtered_df = df[['productDisplayName', 'price', 'id']]
+        
+        # Limit the number of records based on the query parameter
+        limited_df = filtered_df.head(limit)
+        
+        # Convert to JSON-friendly format
+        json_data = limited_df.to_dict(orient='records')
         json_data = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in json_data]
         
         return JSONResponse(content=json_data)
