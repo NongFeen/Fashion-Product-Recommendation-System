@@ -22,6 +22,7 @@ source .venv/bin/activate
 Running API using
 ```
 uvicorn exampleSite:app --reload
+ngrok http http://localhost:8000
 ```
 Testing POST api with img with POST method will recive id as json 
 ```
