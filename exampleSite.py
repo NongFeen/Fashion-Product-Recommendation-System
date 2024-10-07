@@ -121,9 +121,13 @@ async def getMetadata():
         return JSONResponse(content={"error": str(e)}, status_code=500)
 # some missing value in csv make me pain   - Feen
 @app.get("/Frontpage/")
-async def getFrontpage(limit: int = Query(10, enum=[10, 20, 30, 50])):
+async def getFrontpage(page: int):
     try:
         # Read the CSV file
+        number_per_page = 32
+        start_index = (page - 1) * number_per_page  # Starting index for the page
+        end_index = start_index + number_per_page
+        
         df = pd.read_csv(csv_path, delimiter=';')
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         
@@ -131,7 +135,7 @@ async def getFrontpage(limit: int = Query(10, enum=[10, 20, 30, 50])):
         filtered_df = df[['productDisplayName', 'price', 'id']]
         
         # Limit the number of records based on the query parameter
-        limited_df = filtered_df.head(limit)
+        limited_df = filtered_df.iloc[start_index:end_index]
         
         # Convert to JSON-friendly format
         json_data = limited_df.to_dict(orient='records')
@@ -195,7 +199,11 @@ def get_item_detail_by_name(
     baseColour: str = None,
     season: str = None,
     year: str = None,
-    usage : str = None):
+    usage : str = None,
+    name: str = None,
+    min_price: float = None, 
+    max_price: float = None 
+    ):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     
@@ -217,6 +225,12 @@ def get_item_detail_by_name(
         item_detail = item_detail[item_detail['year'].astype(str).str.contains(year, case=False, na=False)]
     if usage:
         item_detail = item_detail[item_detail['usage'].str.contains(usage, case=False, na=False)]
+    if name:  
+        item_detail = item_detail[item_detail['productDisplayName'].str.contains(name, case=False, na=False)]
+    if min_price is not None:
+        item_detail = item_detail[item_detail['price'] >= min_price]
+    if max_price is not None:
+        item_detail = item_detail[item_detail['price'] <= max_price]
     if item_detail.empty:
         raise HTTPException(status_code=404, detail="No items found")
 
