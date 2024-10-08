@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from fastapi import Response
+from pathlib import Path
 app = FastAPI()
 
 # Load csv file
@@ -72,6 +73,16 @@ def extract_id_from_path(file_path):
 # Static Images
 app.mount("/image", StaticFiles(directory="dataset/images"), name="image")
 
+@app.get("/images/{item_id}")
+async def get_image(item_id: str): 
+    directory = "dataset/images"
+    image_path = Path(directory) / f"{item_id}.jpg" 
+    if image_path.exists():
+        image_bytes = image_path.read_bytes() 
+        return Response(content=image_bytes, media_type="image/png")
+    else:
+        return JSONResponse(content={"error": str(e)}, status_code=404)
+    
 # API endpoint to handle image uploads and return recommendations
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
@@ -178,7 +189,7 @@ def get_item_detail_by_name(name: str):
 def get_multiple_by_id(ids: str):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    filtered_df = df[['productDisplayName', 'price', 'id']]
+    filtered_df = df
     id_list = [int(i) for i in ids.split(",")]
     item_details = filtered_df[filtered_df['id'].isin(id_list)]
 
