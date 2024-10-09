@@ -174,3 +174,5 @@ cython_debug/
 /test.py
 /test2.py
 test.py
+/huggingface_cloth_segmentation/*
+!/huggingface_cloth_segmentation/__init__.py

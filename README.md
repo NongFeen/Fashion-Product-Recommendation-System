@@ -8,7 +8,13 @@ Dataset must be in "dataset" file, inside must have "images" file <br/ >
 ./dataset/images <br/>
 [Fashion Product Images (Small)](https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small)
 
-Using pythin venv 
+Clone huggingface_Cloth_segmentation and addd __init__.py in to the folder
+```
+git clone https://github.com/wildoctopus/huggingface-cloth-segmentation.git
+pip install -r requirements.txt
+```
+
+Using python venv 
 ``` 
 # Windows command prompt
 .venv\Scripts\activate.bat
@@ -21,7 +27,7 @@ source .venv/bin/activate
 ```
 Running API using
 ```
-uvicorn exampleSite:app --reload
+uvicorn backend:app --reload
 ngrok http http://localhost:8000
 ```
 Testing POST api with img with POST method will recive id as json 

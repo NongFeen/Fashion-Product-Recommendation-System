@@ -7,6 +7,7 @@ from sklearn.neighbors import NearestNeighbors
 from PIL import Image
 import base64
 import os
+from typing import Annotated
 from io import BytesIO
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
@@ -16,8 +17,9 @@ from numpy.linalg import norm
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-from fastapi import Response
+from fastapi import Response, Form
 from pathlib import Path
+from huggingface_cloth_segmentation import load_seg_model, generate_mask
 app = FastAPI()
 
 # Load csv file
@@ -31,6 +33,8 @@ filenames = pickle.load(open('filenames.pkl', 'rb'))
 model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 model.trainable = False
 model = Sequential([model, GlobalMaxPooling2D()])
+
+model2 = load_seg_model('huggingface_cloth_segmentation/model/cloth_segm.pth')
 
 
 app.add_middleware(
@@ -85,34 +89,60 @@ async def get_image(item_id: str):
     
 # API endpoint to handle image uploads and return recommendations
 @app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), selection: str =Form(...)):
     # Save the uploaded image temporarily
     file_location = f"uploads/{file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(file.file.read())
-        
+
+    # Apply mask using segmentation model
+    output_filenames = generate_mask(file_location, model2)
+    if len(output_filenames) == 0:
+        output_filenames.append(file_location)
+
     # Extract features from the uploaded image
-    features = feature_extraction(file_location, model)
+    features_list = []
+    for file in output_filenames:
+        features = feature_extraction(file, model)
+        features_list.append(features)
 
-    # Get recommendations and distances
-    distances, indices = recommend(features, feature_list)
+    # Load CSV for metadata filtering
+    df = pd.read_csv(csv_path, delimiter=';')
+    
+    # Filter based on the "masterCategory" selection
+    if selection:
+        df_filtered = df[df['masterCategory'].str.contains(selection, case=False, na=False)]
+        if df_filtered.empty:
+            return JSONResponse(content={"error": "No items found in the selected category"}, status_code=404)
 
-    # Prepare the recommendations with base64 images
+        # Filter filenames and features based on the filtered dataframe
+        valid_ids = df_filtered['id'].astype(str).tolist()
+        filtered_filenames = [filenames[i] for i in range(len(filenames)) if extract_id_from_path(filenames[i]) in valid_ids]
+        filtered_feature_list = [feature_list[i] for i in range(len(filenames)) if extract_id_from_path(filenames[i]) in valid_ids]
+    else:
+        filtered_filenames = filenames
+        filtered_feature_list = feature_list
+
+    indices_list = []
+    distances_list = []
+
+    for features in features_list:
+        distances, indices = recommend(features, filtered_feature_list)
+        indices_list.append(indices)
+        distances_list.append(distances)
+
     recommendations = []
-    # for i in range(len(indices[0])):
-    #     img_path = filenames[indices[0][i]]
-    #     img_base64 = image_to_base64(img_path)
-    #     recommendations.append({
-    #         "image_base64": img_base64,
-    #         "distance": float(distances[0][i])
-    #     })
+
+    num = len(indices_list)
     for i in range(10):
-        img_id = extract_id_from_path(filenames[indices[0][i]])
+        img_id = extract_id_from_path(filtered_filenames[indices_list[i%num][0][i//num]])
         recommendations.append({
             "id": img_id,  # Use the image ID instead of the index
         })
-    # Return the recommendations
-    return JSONResponse(content= recommendations)
+
+    # Return the recommendations as JSON
+    return JSONResponse(content=recommendations)
+
 
 @app.get("/metadata")
 async def getMetadata():
@@ -143,7 +173,8 @@ async def getFrontpage(page: int):
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         
         # Filter only the necessary columns
-        filtered_df = df[['productDisplayName', 'price', 'id']]
+        # filtered_df = df[['productDisplayName', 'price', 'id']]
+        filtered_df = df
         
         # Limit the number of records based on the query parameter
         limited_df = filtered_df.iloc[start_index:end_index]
@@ -171,11 +202,15 @@ def getItemDetail(item_id: str):
 
     return JSONResponse(content=item_dict)
 
-@app.get("/searchbyname") 
+@app.get("/searchbyname")
 def get_item_detail_by_name(name: str):
     df = pd.read_csv(csv_path, delimiter=';')
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    item_detail = df[df['productDisplayName'].str.contains(name, case=False, na=False)]#find by name
+    item_detail = df[df['productDisplayName'].str.contains(name, case=False, na=False)]#find by nameง
+    start_index = 0
+    end_index = 100
+    limited_df = item_detail.iloc[start_index:end_index]
+    
     if item_detail.empty:
         raise HTTPException(status_code=404, detail="No items found")
 
@@ -244,7 +279,9 @@ def get_item_detail_by_name(
         item_detail = item_detail[item_detail['price'] <= max_price]
     if item_detail.empty:
         raise HTTPException(status_code=404, detail="No items found")
-
+    start_index = 0
+    end_index = 100
+    item_detail = item_detail.iloc[start_index:end_index]
     items_list = item_detail.to_dict(orient='records')
     items_list = [{k: (None if pd.isna(v) else v) for k, v in item.items()} for item in items_list]
     #example /searchbyDetail?gender=Men&masterCategory=Apparel
